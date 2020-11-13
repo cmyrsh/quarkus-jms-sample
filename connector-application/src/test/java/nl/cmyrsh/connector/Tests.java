@@ -6,16 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import javax.enterprise.event.Observes;
 import javax.jms.JMSException;
 
 import com.google.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 
 import io.quarkus.test.junit.QuarkusTest;
 import nl.cmyrsh.connector.sender.MessageSender;
+
 
 @QuarkusTest
 public class Tests {
@@ -28,9 +30,17 @@ public class Tests {
     String queue;
 
 
+
+
     @Inject
     Tests(MessageSender messageSender) {
         this.messageSender = messageSender;
+    }
+
+
+    @BeforeEach
+    public void testArtemis() throws InterruptedException {
+        LOG.info("Waiting before running test");
     }
 
     @Test
@@ -40,8 +50,6 @@ public class Tests {
 
         LOG.info("Getting MessageSender");
 
-        //Thread.sleep(10000);
-
         assertNotNull(messageSender);
 
         messageSender.sendNewMessage(queue);
@@ -49,4 +57,6 @@ public class Tests {
         assertEquals(Boolean.TRUE, Boolean.TRUE);
 
     }
+
+
 }

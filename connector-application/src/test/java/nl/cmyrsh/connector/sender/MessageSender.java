@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.jms.BytesMessage;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSContext;
@@ -19,18 +18,20 @@ import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import nl.cmyrsh.messages.User;
 
+
+@Testcontainers
 @ApplicationScoped
 public class MessageSender {
 
     private static final Logger LOG = Logger.getLogger(MessageSender.class.getName());
 
-    @Inject
-    ConnectionFactory connectionFactory;
+    private final ConnectionFactory artemisConnectionFactory;
 
     private final Random random = new Random();
 
@@ -38,13 +39,16 @@ public class MessageSender {
 
     private final DatumWriter<User> datumWriter = new SpecificDatumWriter<>(User.class);
 
-    MessageSender() {
-        LOG.info("Creating MessageSender");
+    @Inject
+    MessageSender(ConnectionFactory artemisConnectionFactory) {
+        this.artemisConnectionFactory = artemisConnectionFactory;
+        LOG.info("Created MessageSender");
     }
 
-    void startup(@Observes StartupEvent event) { 
+    void startup(@Observes StartupEvent event) throws InterruptedException {
         LOG.info("Creating jmsContext");
-        jmsContext = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE);
+        jmsContext = artemisConnectionFactory.createContext(Session.AUTO_ACKNOWLEDGE);
+        LOG.info("Created jmsContext");
     }
 
     public void sendNewMessage(String queue) throws JMSException, IOException {
