@@ -2,7 +2,7 @@ package nl.cmyrsh.connector.sender;
 
 import java.util.logging.Logger;
 
-import javax.ejb.ApplicationException;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.jms.ConnectionFactory;
 
@@ -14,7 +14,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
-@ApplicationException
+@ApplicationScoped
 public class TestArtemisServer {
 
     private static final Logger LOG = Logger.getLogger(TestArtemisServer.class.getName());
