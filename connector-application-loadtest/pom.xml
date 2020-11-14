@@ -62,7 +62,10 @@
       <artifactId>avro</artifactId>
       <version>1.10.0</version>
     </dependency>
-          
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-jib</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
