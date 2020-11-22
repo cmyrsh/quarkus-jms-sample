@@ -1,0 +1,25 @@
+@namespace("cmyrsh.message")
+protocol ipcmessage{
+
+    record context{
+    string coreid;
+    string flowid;
+    map<string> attributes;
+    }
+    record payload{
+        string namespace;
+        string value;
+    }
+    record history{
+        string name;
+        string stage;
+        string value;
+    }
+
+    record message {
+    string id;
+    context contextdata;
+    array<payload> messagepayloads;
+    array<history> historyvalues;
+    }
+}
