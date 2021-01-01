@@ -1,25 +1,27 @@
 package nl.cmyrsh.connector.processors;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.jms.IllegalStateException;
 
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import cmyrsh.message.Message;
 import io.quarkus.vertx.ConsumeEvent;
-import nl.cmyrsh.messages.User;
+import io.vertx.mutiny.core.eventbus.EventBus;
 
 @ApplicationScoped
 public class MessageValidator {
 
-    private static final Logger LOG = Logger.getLogger(MessageValidator.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(MessageValidator.class.getName());
 
+    @Inject
+    EventBus eventBus;
 
-    final DatumReader<nl.cmyrsh.messages.User> messageReader = new SpecificDatumReader<User>(User.class);
 
     @ConsumeEvent("process0")
     public String validateAndForward(byte[] jmsMessageBody) {
@@ -27,18 +29,18 @@ public class MessageValidator {
             if(Objects.isNull(jmsMessageBody)) throw new IllegalStateException("Got Null JMS Message");
             
             LOG.info(String.format("Processing Message of length %d", jmsMessageBody.length));
-            
 
-            User user = messageReader.read(null, DecoderFactory.get().binaryDecoder(jmsMessageBody, null));
+            Message message = Message.fromByteBuffer(ByteBuffer.wrap(jmsMessageBody));
 
-            // if(Integer.parseInt(jmsMessageBody) % 2 == 0) {
-            //     throw new RuntimeException(String.format("Bad Message %s", jmsMessageBody));
-            // }
+            eventBus.request("persist0", message)
+            .onItem()
+            .transform(t -> t.body())
+            .subscribe();
 
-            return user.getName().toString();
+            return "OK";
             
         } catch (Exception e) {
-            LOG.severe(String.format("Error in validateAndForward %s", e.getMessage()));
+            LOG.error(String.format("Error in validateAndForward %s", e.getMessage()));
             throw new RuntimeException("Unable to parse JMS Message", e);
         }
     }

@@ -2,7 +2,12 @@ package nl.cmyrsh.connector.sender;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,14 +24,11 @@ import javax.jms.Session;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.specific.SpecificDatumWriter;
-
+import cmyrsh.message.Context;
+import cmyrsh.message.Message;
+import cmyrsh.message.Payload;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
-import nl.cmyrsh.messages.User;
 
 @ApplicationScoped
 public class MessageLoadSender implements Runnable{
@@ -39,8 +41,6 @@ public class MessageLoadSender implements Runnable{
     private final Random random = new Random();
 
     private JMSContext jmsContext;
-
-    private final DatumWriter<User> datumWriter = new SpecificDatumWriter<>(User.class);
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -64,40 +64,50 @@ public class MessageLoadSender implements Runnable{
 
         BytesMessage createBytesMessage = jmsContext.createBytesMessage();
 
-        User newUser = newUser();
-        
-        BinaryEncoder binaryEncoder = EncoderFactory.get().binaryEncoder(out, null);
+        Message newMsg = newMessage();
 
-        datumWriter.write(newUser, binaryEncoder);
-
-        binaryEncoder.flush();
-
-        out.close();
-
-        final byte[] data = out.toByteArray();
+        final byte[] data = newMsg.toByteBuffer().flip().array();
 
         LOG.info(String.format("Sending message of length %d", data.length));
 
         createBytesMessage.writeBytes(data);
 
-
-
-
-        createBytesMessage.setStringProperty("user_name", newUser.getName().toString());
+        createBytesMessage.setStringProperty("msg_id", newMsg.getContext().getPacsTxId().toString());
 
         jmsContext.createProducer().send(jmsContext.createQueue(queue), createBytesMessage);
     }
 
 
-    private User newUser() {
+    private Message newMessage() throws IOException {
         LOG.info("Creating newUser");
-        return User.newBuilder()
-        .setName("Name " + random.nextGaussian())
-        .setFavoriteNumber(random.nextInt())
-        .setFavoriteColor("Green")
+
+        final String pacsTxId = UUID.randomUUID().toString().replaceAll("\\-", "").toUpperCase();
+        final String pacsTxMsgId = UUID.randomUUID().toString().replaceAll("\\-", "").toUpperCase();
+        final BigDecimal amt = new BigDecimal("" + (Math.abs(random.nextDouble()) * 100));
+
+        return Message.newBuilder()
+        .setId(pacsTxId+"0")
+        .setContext(
+            Context.newBuilder()
+                    .setPacsTxId(pacsTxId)
+                    .setCoreId("default")
+                    .setFlowId(pacsTxId+"F0")
+                    .setAttributes(Map.of("BPT", "CT", "Channel", "X"))
+                    .build())
+        .setMessagePayload(
+            Payload.newBuilder()
+                    .setNamespace("pacs0080102")
+                    .setValue(readPacs008(pacsTxMsgId, amt, pacsTxId))
+                    .build())
         .build();
     }
 
+    private String readPacs008(String id, BigDecimal amt, String ref) throws IOException {
+        return Files.readString(Path.of("sample.xml"))
+        .replace("$id", id)
+        .replace("$amt", amt.toString())
+        .replace("$ref", ref);
+    }
 
     void onStop(@Observes ShutdownEvent ev) {
         jmsContext.close();

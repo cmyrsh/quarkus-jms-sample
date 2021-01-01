@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <Id>$id</Id>
+  <Amount>$amt</Amount>
+  <From>str111</From>
+  <To>str111</To>
+  <References>$ref</References>
+</Root>

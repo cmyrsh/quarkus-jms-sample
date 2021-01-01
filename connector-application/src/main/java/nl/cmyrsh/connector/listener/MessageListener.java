@@ -1,14 +1,8 @@
 package nl.cmyrsh.connector.listener;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.StreamSupport;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -22,6 +16,8 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -30,7 +26,7 @@ import io.vertx.mutiny.core.eventbus.EventBus;
 @ApplicationScoped
 public class MessageListener implements Runnable{
 
-    private static final Logger LOG = Logger.getLogger(MessageListener.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(MessageListener.class.getName());
 
     @Inject
     ConnectionFactory connectionFactory;
@@ -65,7 +61,7 @@ public class MessageListener implements Runnable{
                 Message message = consumer.receive();
                 if (message == null) return;
                 if(! (message instanceof BytesMessage)){
-                    LOG.severe(String.format("Received message is not a ByteMessage %s", message.getClass().getName()));
+                    LOG.error(String.format("Received message is not a ByteMessage %s", message.getClass().getName()));
                     return;
                 }
 
@@ -77,7 +73,7 @@ public class MessageListener implements Runnable{
                 LOG.info(String.format("Got Message bodylength %d", bodyLength));
 
                 if(BigInteger.valueOf(bodyLength).compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-                    LOG.severe("Cannot process Message. Body length is too big");
+                    LOG.error("Cannot process Message. Body length is too big");
                     return;
                 }
 
@@ -108,11 +104,11 @@ public class MessageListener implements Runnable{
         try {
             message.acknowledge();
         } catch (JMSException e) {
-            LOG.severe(String.format("Error Acknowledging JMS Message Callback : %s", callback));
+            LOG.error(String.format("Error Acknowledging JMS Message Callback : %s", callback));
         }
     }
     private void fail(JMSContext session, Throwable error) {
-        LOG.severe(String.format("Got Error %s", error.getMessage()));
+        LOG.error(String.format("Got Error %s", error.getMessage()));
         session.recover();
     }
 

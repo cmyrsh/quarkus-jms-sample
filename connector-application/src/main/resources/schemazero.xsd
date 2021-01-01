@@ -1,0 +1,13 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="Root">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Id" type="xs:normalizedString"/>
+                <xs:element name="Amount" type="xs:decimal"/>
+                <xs:element name="From" type="xs:normalizedString"/>
+                <xs:element name="To" type="xs:normalizedString"/>
+                <xs:element name="References" type="xs:normalizedString" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

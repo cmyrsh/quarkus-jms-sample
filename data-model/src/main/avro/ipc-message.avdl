@@ -1,25 +1,26 @@
 @namespace("cmyrsh.message")
 protocol ipcmessage{
 
-    record context{
-    string coreid;
-    string flowid;
-    map<string> attributes;
+    record Context{
+        string coreId;
+        string flowId;
+        string pacsTxId;
+        map<string> attributes = {};
     }
-    record payload{
+    record Payload{
         string namespace;
         string value;
     }
-    record history{
-        string name;
+    record ConnectorResponse{
         string stage;
-        string value;
+        string response;
+        map<string> eventData = {};
     }
-
-    record message {
-    string id;
-    context contextdata;
-    array<payload> messagepayloads;
-    array<history> historyvalues;
+    
+    record Message {
+        string id;
+        Context context;
+        Payload messagePayload;
+        array<ConnectorResponse> responses = [];
     }
 }

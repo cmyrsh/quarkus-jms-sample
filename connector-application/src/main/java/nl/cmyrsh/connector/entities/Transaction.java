@@ -1,6 +1,7 @@
 package nl.cmyrsh.connector.entities;
 
-public class User {
+
+public class Transaction {
 
 
     
