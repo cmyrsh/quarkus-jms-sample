@@ -1,6 +1,7 @@
 package nl.cmyrsh.connector.processors;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Objects;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -12,6 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import cmyrsh.message.Message;
 import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.subscription.Cancellable;
 import io.vertx.mutiny.core.eventbus.EventBus;
 
 @ApplicationScoped
@@ -32,10 +35,18 @@ public class MessageValidator {
 
             Message message = Message.fromByteBuffer(ByteBuffer.wrap(jmsMessageBody));
 
-            eventBus.request("persist0", message)
-            .onItem()
-            .transform(t -> t.body())
-            .subscribe();
+            Uni<io.vertx.mutiny.core.eventbus.Message<Object>> request = eventBus.request("persist0", message);
+
+            request
+                .ifNoItem().after(Duration.ofSeconds(5)).failWith(new RuntimeException("Timeout while Persisting message"))
+                .onItem()
+                .transform(t -> t.body())
+                .onFailure().recoverWithItem(failure -> new RuntimeException("Failure while Persisting " + failure.getMessage(), failure))
+                .subscribe()
+                .with(onItemCallback -> ok(onItemCallback.toString()),
+                      onFailureCallback -> failure(onFailureCallback));
+            
+
 
             return "OK";
             
@@ -43,5 +54,12 @@ public class MessageValidator {
             LOG.error(String.format("Error in validateAndForward %s", e.getMessage()));
             throw new RuntimeException("Unable to parse JMS Message", e);
         }
+    }
+
+    private void ok(String message) {
+        LOG.info("OK MSG -> " + message);
+    }
+    private void failure(Throwable message) {
+        LOG.error("ERROR MSG", message);
     }
 }

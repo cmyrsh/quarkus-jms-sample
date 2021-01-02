@@ -34,8 +34,6 @@ public class Persister {
 
         void startSequence(@Observes StartupEvent startupEvent) {
 
-                session.execute("use " + keyspace);
-
                 transactionInsert = session.prepare(
                                 "INSERT INTO transaction(core_id, pacs_tx_id, flow_id, sequence_id, state, handler, attributes) values (?, ?, ?, ?, ?, ?, ?)");
                 transactionPayloadInsert = session.prepare(
@@ -45,23 +43,26 @@ public class Persister {
         }
 
         @ConsumeEvent("persist0")
-        Boolean persistNew(Message message) {
+        public Boolean persistNew(Message message) {
 
-                session.execute(transactionInsert.bind(message.getContext().getCoreId(),
+                LOG.info("Persisting message {}", message.toString());
+
+                Boolean txupdated = session.execute(transactionInsert.bind(message.getContext().getCoreId(),
                                 message.getContext().getPacsTxId(), message.getContext().getFlowId(), 0, "NEW", null,
-                                message.getContext().getAttributes())).all().forEach(r -> LOG.info(":: ROW " + r.toString()));
+                                message.getContext().getAttributes())).wasApplied();
 
                                 final Integer sequence = message.getResponses().size();
                 final ConnectorResponse lastResponse = message.getResponses().get(sequence - 1);
 
-                session.execute(transactionPayloadInsert.bind(message.getContext().getPacsTxId(), sequence,
-                                lastResponse.getStage(), lastResponse.getEventData()));
+                Boolean payloadinserted = session.execute(transactionPayloadInsert.bind(message.getContext().getPacsTxId(), sequence,
+                                lastResponse.getStage(), lastResponse.getEventData())).wasApplied();
 
-                return Boolean.TRUE;
+                return txupdated && payloadinserted;
 
         }
 
-        void updateTransaction(Message message) {
+
+        public void updateTransaction(Message message) {
                 session.execute(transactionProgressInsert.bind(message.getContext().getPacsTxId(),
                                 message.getMessagePayload().getNamespace(), message.getMessagePayload().getValue()));
 

@@ -23,6 +23,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import nl.cmyrsh.connector.sender.MessageSender;
 import nl.cmyrsh.connector.containers.TestArtemisServer;
 import nl.cmyrsh.connector.containers.TestCassandraServer;
+import nl.cmyrsh.connector.cql.CheckDB;
 
 
 @QuarkusTest
@@ -39,8 +40,11 @@ public class Tests {
     
     final MessageSender messageSender;
 
+    final CheckDB checkDB;
+
     @Inject
-    Tests(MessageSender messageSender) {
+    Tests(MessageSender messageSender, CheckDB checkDB) {
+        this.checkDB = checkDB;
         System.out.println("MessageSender " + messageSender);
         this.messageSender = messageSender;
     }
@@ -65,10 +69,24 @@ public class Tests {
 
         assertNotNull(messageSender);
 
-        messageSender.sendNewMessage(queue);
+        String newMsgId = messageSender.sendNewMessage(queue);
 
         assertEquals(Boolean.TRUE, Boolean.TRUE);
 
+        sleep(1000L);
+
+        LOG.info(checkDB.getReport(newMsgId));
+
+
+    }
+
+
+    private void sleep(Long millies) {
+        try {
+            Thread.sleep(millies);
+        } catch (Exception e) {
+            throw new RuntimeException("Thread Interrupted");
+        }
     }
 
 

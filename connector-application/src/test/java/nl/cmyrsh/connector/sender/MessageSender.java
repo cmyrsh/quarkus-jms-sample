@@ -48,7 +48,7 @@ public class MessageSender {
         LOG.info("Created jmsContext");
     }
 
-    public void sendNewMessage(String queue) throws JMSException, IOException {
+    public String sendNewMessage(String queue) throws JMSException, IOException {
 
 
         final BytesMessage createBytesMessage = jmsContext.createBytesMessage();
@@ -68,6 +68,7 @@ public class MessageSender {
 
         jmsContext.createProducer().send(jmsContext.createQueue(queue), createBytesMessage);
 
+        return newMessage.getContext().getPacsTxId().toString();
         
 
     }

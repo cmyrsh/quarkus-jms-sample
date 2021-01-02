@@ -41,8 +41,7 @@ public class TestCassandraServer implements QuarkusTestResourceLifecycleManager 
         return Map.of(
             "quarkus.cassandra.contact-points", cassandra.getHost() + ":" + cassandra.getMappedPort(CASSANDRA_PORT),
             "quarkus.cassandra.local-datacenter", CASSANDRA_DC,
-            "quarkus.cassandra.keyspace", CASSANDRA_KEYSPACE,
-            "connector.cassandra.keyspace", CASSANDRA_KEYSPACE);
+            "quarkus.cassandra.keyspace", CASSANDRA_KEYSPACE);
     }
 
     @Override

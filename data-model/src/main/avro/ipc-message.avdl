@@ -2,7 +2,7 @@
 protocol ipcmessage{
 
     record Context{
-        string coreId;
+        string coreId = "default";
         string flowId;
         string pacsTxId;
         map<string> attributes = {};
