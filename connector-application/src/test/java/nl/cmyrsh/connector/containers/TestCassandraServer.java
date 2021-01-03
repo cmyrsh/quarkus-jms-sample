@@ -1,6 +1,5 @@
 package nl.cmyrsh.connector.containers;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -28,6 +27,7 @@ public class TestCassandraServer implements QuarkusTestResourceLifecycleManager 
     public static GenericContainer cassandra = new GenericContainer<>(DockerImageName.parse("cassandra:latest"))
             .withExposedPorts(CASSANDRA_PORT).withEnv("CASSANDRA_DC", CASSANDRA_DC)
             .withFileSystemBind("target/test-classes/scripts/cassandra-init.sh", "/cassandra-init.sh", BindMode.READ_ONLY)
+            //.withFileSystemBind("target/test-classes/data", "/var/lib/cassandra", BindMode.READ_WRITE)
             .withCommand("sh /cassandra-init.sh")
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(20)));
 
@@ -46,6 +46,7 @@ public class TestCassandraServer implements QuarkusTestResourceLifecycleManager 
 
     @Override
     public void stop() {
+        //LOG.info(cassandra.getLogs());
         cassandra.stop();
         LOG.info("Stopped Cassandra");
 

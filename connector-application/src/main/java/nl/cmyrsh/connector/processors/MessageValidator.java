@@ -26,6 +26,9 @@ public class MessageValidator {
     EventBus eventBus;
 
 
+    @Inject
+    Persister persister;
+
     @ConsumeEvent("process0")
     public String validateAndForward(byte[] jmsMessageBody) {
         try {
@@ -38,14 +41,11 @@ public class MessageValidator {
             Uni<io.vertx.mutiny.core.eventbus.Message<Object>> request = eventBus.request("persist0", message);
 
             request
-                .ifNoItem().after(Duration.ofSeconds(5)).failWith(new RuntimeException("Timeout while Persisting message"))
                 .onItem()
                 .transform(t -> t.body())
-                .onFailure().recoverWithItem(failure -> new RuntimeException("Failure while Persisting " + failure.getMessage(), failure))
                 .subscribe()
                 .with(onItemCallback -> ok(onItemCallback.toString()),
                       onFailureCallback -> failure(onFailureCallback));
-            
 
 
             return "OK";
@@ -56,8 +56,14 @@ public class MessageValidator {
         }
     }
 
-    private void ok(String message) {
-        LOG.info("OK MSG -> " + message);
+    private void ok(Object message) {
+
+        if(Throwable.class.isInstance(message)) {
+            failure(Throwable.class.cast(message));
+        } else {
+            LOG.info("OK MSG -> {} ", message);
+        }
+        
     }
     private void failure(Throwable message) {
         LOG.error("ERROR MSG", message);

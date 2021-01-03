@@ -34,18 +34,18 @@ public class CheckDB {
 
     public String getReport(String transactionId) {
         String getTx = session.execute(getTrasaction.bind(transactionId)).all().stream().map(row -> row.toString())
-                .collect(Collectors.joining("\\n"));
+                .collect(Collectors.joining("\n"));
 
         String getTxPayload = session.execute(getTransactionPayload.bind(transactionId)).all().stream()
-                .map(row -> row.toString()).collect(Collectors.joining("\\n"));
+                .map(row -> row.toString()).collect(Collectors.joining("\n"));
         String getTxProgress = session.execute(getTransactionProgress.bind(transactionId)).all().stream()
-                .map(row -> row.toString()).collect(Collectors.joining("\\n"));
+                .map(row -> row.toString()).collect(Collectors.joining("\n"));
 
-        return new StringBuilder().append("=================================================").append("\\n")
-                .append("----------------------TransactionData-------------------").append(getTx).append("\\n")
-                .append("----------------------Payload-------------------").append("\\n").append(getTxPayload)
-                .append("\\n").append("----------------------Progress-------------------").append("\\n")
-                .append(getTxProgress).append("\\n").append("=================================================")
+        return new StringBuilder().append("=================================================").append("\n")
+                .append("----------------------TransactionData-------------------").append(getTx).append("\n")
+                .append("----------------------Payload-------------------").append("\n").append(getTxPayload)
+                .append("\n").append("----------------------Progress-------------------").append("\n")
+                .append(getTxProgress).append("\n").append("=================================================")
                 .toString();
 
     }
