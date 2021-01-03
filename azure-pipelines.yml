@@ -6,14 +6,20 @@
 trigger:
 - main
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-steps:
-- script: mvn clean install
-  displayName: 'maven clean install'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+  - stage: UnitTestAndBuild
+    jobs:
+      - job: MavenBuild
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - task: Maven@3
+          inputs:
+            mavenPomFile: 'pom.xml'
+            mavenOptions: '-Xmx3072m'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.11'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: true
+            testResultsFiles: '**/surefire-reports/TEST-*.xml'
+            goals: 'clean package'
