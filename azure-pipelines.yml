@@ -13,7 +13,6 @@ stages:
         pool:
           name: Default
           vmImage: 'ubuntu-latest'
-          demands: location -equals nearamstel
         steps:
         - task: Maven@3
           inputs:
